@@ -16,9 +16,9 @@
 %   with the CCBBI testing rooms. MJH.
 %   + Automatically determine output latency according to the computer. 
 %   + Retrieved num2digit and added to script. 
-%   + Resampled all stimuli to 44.1k and adjusted code accordingly
-%   + Converted stimuli to mono and adjusted code accordingly
-%   + RMS normalized stimuli 
+%   + Resampled all stimuli to 44.1k
+%   + Converted stimuli to mono
+%   + RMS normalized stimuli
 %   ~ Changed screen number (since I have multiple screens)
 
 sca; %DisableKeysForKbCheck([]); KbQueueStop;
@@ -32,7 +32,7 @@ end
 
 testing = 1; 
 textSize = 55; % Change this to change size of text (set 55 in default)
-thisDevice = nan; % Change this to be specific to your computer
+thisDevice = 5; % Change this to be specific to your computer
 
 ad = PsychPortAudio('GetDevices'); % we want to use WASAPI?
 
