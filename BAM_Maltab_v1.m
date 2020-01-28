@@ -18,7 +18,7 @@
 %   + Retrieved num2digit and added to script. 
 %   + Resampled all stimuli to 44.1k and adjusted code accordingly
 %   + Converted stimuli to mono and adjusted code accordingly
-%   + RMS normalized stimuli 
+%   + RMS normalized stimuli and adjusted code accordingly
 %   ~ Changed screen number (since I have multiple screens)
 
 sca; %DisableKeysForKbCheck([]); KbQueueStop;
@@ -32,13 +32,14 @@ end
 
 testing = 1; 
 textSize = 55; % Change this to change size of text (set 55 in default)
-thisDevice = nan; % Change this to be specific to your computer
-
+thisDevice = 5; % Change this to be specific to your computer
+outputLatency = 21.995465; % in msecs, Change for your computer. 
 ad = PsychPortAudio('GetDevices'); % we want to use WASAPI?
 
 if isnan(thisDevice)    
     host = {ad.HostAudioAPIName}; 
     ad = ad(strcmp(host, 'Windows WASAPI')); % these are the WASAPI drivers
+    % Read PsychPortAudio('GetDevices?') for more info
     if length(ad) > 1
         error('Please choose an audio device to play stimuli!')
     else
@@ -48,7 +49,6 @@ if isnan(thisDevice)
 else
     ad = ad(thisDevice == [ad.DeviceIndex]); 
     deviceid = ad.DeviceIndex; 
-    outputLatency = ad.LowOutputLatency * 1000;  % in milliseconds
 end
 
 InitializePsychSound(1) % Assert low latency
@@ -122,7 +122,7 @@ p.condLabel1 = {'trialNumber','stimulusCondition','stimulusIndex'};
 p.recLabel1 = {'trialIndex','RT','correctness'};
 
 % for pulse production section
-p.condLabel2 = {'trialNumber','stimulusIndex','isSR44100?'};
+p.condLabel2 = {'trialNumber','stimulusIndex'};
 p.recLabel2 = {'trialNumber','tapIndex','tapStartTime','tapEndTime'};
 
 % for practice blocks
@@ -243,7 +243,7 @@ for t=1:nstim_p
     [audio_tmp,fs] = audioread(stimfile);
     
     if fs~=srate  % double-check the sampling rate of audio files
-        cond_p(t,3) = fs;
+        error('sampling rate is not equal to what you set');
     end
     audio_pulse{t} = [audio_tmp'; audio_tmp'];
 end
@@ -710,7 +710,7 @@ while ~quitit
     WaitSecs(.1);
     
     tnow = tstart;  t0 = tnow;
-    dur_pulse = length(audio_p_prac{2})/44100; % rec=[];
+    dur_pulse = length(audio_p_prac{2})/srate; % rec=[];
     while tnow < tstart+dur_pulse
         tnow = GetSecs;
         if tnow>t0+.48
@@ -768,31 +768,22 @@ WaitSecs(intv);
 for t=1:nstim_p
     % trial condition
     target = cond_p(t,2);
-    is44100 = cond_p(t,3);
 
     DrawFormattedText(w, 'Be ready...', 'center', 'center', 255, [], [], [], 1.1);
     Screen('Flip', w);
     WaitSecs(intv);
     
     % fill buffer 
-    if is44100=="44100"
-        dur_pulse = length(audio_pulse{t})/44100;
-        PsychPortAudio('FillBuffer', pahandle, audio_pulse{t});
-    else
-        dur_pulse = length(audio_pulse{t})/srate;
-        PsychPortAudio('FillBuffer', pahandle, audio_pulse{t})
-    end
+    dur_pulse = length(audio_pulse{t})/srate;
+    PsychPortAudio('FillBuffer', pahandle, audio_pulse{t});
+    
     DrawFormattedText(w, 'START!', 'center', 'center', 255, [], [], [], 1.1);
     Screen('Flip', w);  WaitSecs(1);
     Screen('Flip', w);  WaitSecs(.5);
     
     Screen('DrawLines', w, crossCoords, 2, 255, [cx, cy]);
     tapOn=0;  count=0;  
-    if is44100=="44100"
-        PsychPortAudio('Start', pahandle);
-    else
-        PsychPortAudio('Start', pahandle);
-    end
+    PsychPortAudio('Start', pahandle);
     
     WaitSecs( outputLatency*.001 - p.ScreenIFI ); % to match the audio latency
     tstart = Screen('Flip', w);
