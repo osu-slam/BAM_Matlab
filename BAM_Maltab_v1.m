@@ -34,12 +34,20 @@ testing = 1;
 textSize = 55; % Change this to change size of text (set 55 in default)
 thisDevice = 5; % Change this to be specific to your computer
 outputLatency = 21.995465; % in msecs, Change for your computer. 
-ad = PsychPortAudio('GetDevices'); % we want to use WASAPI?
+ad = PsychPortAudio('GetDevices'); 
+% Ideally we use ASIO. Otherwise, WASAPI. 
+% Read PsychPortAudio('GetDevices?') for more info
 
 if isnan(thisDevice)    
     host = {ad.HostAudioAPIName}; 
-    ad = ad(strcmp(host, 'Windows WASAPI')); % these are the WASAPI drivers
-    % Read PsychPortAudio('GetDevices?') for more info
+    if all(strcmp(host, 'ASIO')) % these are the ASIO devices
+        ad = ad(strcmp(host, 'ASIO')); % these are the WASAPI drivers
+    else
+        ad = ad(strcmp(host, 'Windows WASAPI')); % these are the WASAPI drivers
+    else
+        error('No compatible audio devices.')
+    end
+    
     if length(ad) > 1
         error('Please choose an audio device to play stimuli!')
     else
