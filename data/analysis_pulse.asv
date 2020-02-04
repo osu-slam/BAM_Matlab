@@ -1,0 +1,29 @@
+%% analysis_pulse
+% Code to analyze BAM Pulse section. Based on Fujii et al. and the HBAT. 
+% Author - MJH
+%
+% MM/DD/YY: CHANGELOG
+% 02/04/20: File initialized. Goal: load 1 subject of data. 
+
+%% Pathing
+dir_data = pwd; 
+
+%% Load the data
+filename = fullfile(dir_data, 'BAM_v1_demo_MH.mat'); 
+% Can probably call dir('*.mat') in the long run?
+
+load(filename)
+% relevant variables:
+% cond_p -- which pulse stim and when
+%      p -- subject params
+%      p.condLabel2
+%      p.recLabel2
+%  rec_p -- actual data from pulse trial
+
+
+%% Compute entropy
+
+
+
+
+%% Close up shop
