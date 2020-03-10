@@ -20,17 +20,23 @@
 %   + Converted stimuli to mono and adjusted code accordingly
 %   + RMS normalized stimuli and adjusted code accordingly
 %   ~ Changed screen number (since I have multiple screens)
+% 02/04/20 -- Generated some demo pulse data for analysis. Started scripts
+%   for analysis. MJH. 
+%   + Fixed logic for audio device selection
+%   + Updated testing logic
 
 sca; %DisableKeysForKbCheck([]); KbQueueStop;
 clc; clear;
 
 try 
     PsychPortAudio('Close'); 
+    InitializePsychSound(1) % Assert low latency
 catch
     disp('PsychPortAudio is already closed.')
+    InitializePsychSound(1) % Assert low latency
 end
 
-testing = 1; 
+testing = 0; 
 textSize = 55; % Change this to change size of text (set 55 in default)
 thisDevice = 5; % Change this to be specific to your computer
 outputLatency = 21.995465; % in msecs, Change for your computer. 
@@ -40,9 +46,9 @@ ad = PsychPortAudio('GetDevices');
 
 if isnan(thisDevice)    
     host = {ad.HostAudioAPIName}; 
-    if all(strcmp(host, 'ASIO')) % these are the ASIO devices
+    if any(strcmp(host, 'ASIO')) % these are the ASIO devices
         ad = ad(strcmp(host, 'ASIO')); % these are the WASAPI drivers
-    else
+    elseif any(strcmp(host, 'Windows WASAPI')) 
         ad = ad(strcmp(host, 'Windows WASAPI')); % these are the WASAPI drivers
     else
         error('No compatible audio devices.')
@@ -59,19 +65,22 @@ else
     deviceid = ad.DeviceIndex; 
 end
 
-InitializePsychSound(1) % Assert low latency
-
 %% Collect subject information
 rootdir = pwd;
 expName = 'BAM_v1';					    
 expDate = date;
 
-prompt = { 'Subject ID:', ...
+if ~testing
+    prompt = { 'Subject ID:', ...
            'Subject Initials:', ...
            'Skip Rhythm part (1 to skip):', ...
            'Skip Melody part (1 to skip):', ...
            'Skip Pulse part (1 to skip):' };
-dlg_in = inputdlg(prompt);
+    dlg_in = inputdlg(prompt);
+else
+    dlg_in = {'00', 'test', '0', '0', '0'}; 
+end
+
 p.subjID  = str2double(dlg_in{1});
 p.subjInitial  = upper(dlg_in{2});
     
@@ -126,12 +135,12 @@ stim_durs = [0, 2.2, 5.2, 7, 10];
 %% Stimulus conditions
 
 % for melody and rhythm discrimination sections
-p.condLabel1 = {'trialNumber','stimulusCondition','stimulusIndex'};
-p.recLabel1 = {'trialIndex','RT','correctness'};
+p.condLabel = {'trialNumber','stimulusCondition','stimulusIndex'};
+p.recLabel = {'trialIndex','RT','correctness'};
 
 % for pulse production section
-p.condLabel2 = {'trialNumber','stimulusIndex'};
-p.recLabel2 = {'trialNumber','tapIndex','tapStartTime','tapEndTime'};
+p.condLabelPulse = {'trialNumber','stimulusIndex'};
+p.recLabelPulse = {'trialNumber','tapIndex','tapStartTime','tapEndTime'};
 
 % for practice blocks
 pcond_r = strings(3,length(p.condLabel1));
